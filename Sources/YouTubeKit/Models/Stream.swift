@@ -8,7 +8,14 @@
 import Foundation
 
 @available(iOS 13.0, watchOS 6.0, tvOS 13.0, macOS 10.15, *)
-public struct Stream {
+public struct Stream: Equatable, Hashable {
+    public static func == (lhs: Stream, rhs: Stream) -> Bool {
+        lhs.url.absoluteString == rhs.url.absoluteString
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(url)
+    }
     
     public let url: URL
     public let itag: ITag
@@ -21,7 +28,7 @@ public struct Stream {
     public let averageBitrate: Int?
     public let isDash: Bool
     
-    private let filesize: Int?
+    public var filesize: Int?
     
     init(format: InnerTube.StreamingData.Format) throws {
         guard let url = format.url.flatMap({ URL(string: $0) }),

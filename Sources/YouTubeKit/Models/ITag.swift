@@ -12,10 +12,10 @@ public struct ITag {
     let itag: Int
     
     /// lower side of resolution (e.g. 1080 for 1080p)
-    let videoResolution: Int?
+    public let videoResolution: Int?
     
     /// in kbps
-    let audioBitrate: Int?
+    public let audioBitrate: Int?
     
     init?(_ itag: Int) {
         self.itag = itag
