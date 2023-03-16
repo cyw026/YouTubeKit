@@ -18,6 +18,12 @@ public struct Thumbnail: Codable {
         case height
     }
 
+    public init(url: String?, width: Int?, height: Int?) {
+        self.url = url
+        self.width = width
+        self.height = height
+    }
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.url = try container.decodeIfPresent(String.self, forKey: .url)
