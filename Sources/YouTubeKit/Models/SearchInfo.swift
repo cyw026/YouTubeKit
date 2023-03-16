@@ -8,9 +8,9 @@
 import Foundation
 
 public class InfoItem: Codable {
-    let id: String?
-    let title: String?
-    let channelTitle: String?
+    public let id: String?
+    public let title: String?
+    public let channelTitle: String?
 
     enum CodingKeys: CodingKey {
         case id
@@ -45,8 +45,8 @@ public class InfoItem: Codable {
 }
 
 public class VideoInfoItem: InfoItem {
-    var medium: Thumbnail?
-    var high: Thumbnail?
+    public var medium: Thumbnail?
+    public var high: Thumbnail?
 
     enum CodingKeys: CodingKey {
         case medium
@@ -76,8 +76,8 @@ public class VideoInfoItem: InfoItem {
 }
 
 public class PlaylistInfoItem: InfoItem {
-    var coverUrl: String?
-    var videoCount: Int?
+    public var coverUrl: String?
+    public var videoCount: Int?
 
     enum CodingKeys: CodingKey {
         case videoCount
@@ -91,7 +91,7 @@ public class PlaylistInfoItem: InfoItem {
         self.coverUrl = try container.decodeIfPresent(String.self, forKey: .coverUrl)
     }
 
-    init(id: String?, title: String?, channelTitle: String?, coverUrl: String?, videoCount: Int?) {
+    public init(id: String?, title: String?, channelTitle: String?, coverUrl: String?, videoCount: Int?) {
         super.init(id: id, title: title, channelTitle: channelTitle)
         self.coverUrl = coverUrl
         self.videoCount = videoCount
