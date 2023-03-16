@@ -218,6 +218,48 @@ public class YouTube {
             return innertubeResponse
         }
     }
+
+    public func search(query: String, contentFilter: String? = nil, continuation: String? = nil) async throws -> SearchInfo {
+
+        let innertube = InnerTube(client: .web, useOAuth: useOAuth, allowCache: allowOAuthCache)
+        let response = try await innertube.search(query: query, continuation: continuation)
+
+        var searchInfo = SearchInfo(searchString: query, contentFilter: contentFilter, sortFilter: nil)
+
+        var relatedItems: [InfoItem] = []
+
+        if let sectionListContents = response.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer?.contents {
+            for content in sectionListContents {
+                if let itemSection = content.itemSectionRenderer, let contents = itemSection.contents {
+                    for itemSectionContent in contents {
+                        if let video = itemSectionContent.videoRenderer {
+                            let title = video.title?.runs?.first?.text
+                            let channelTitle = video.longBylineText?.runs?.first?.text
+                            let medium = video.thumbnail?.thumbnails?.first
+                            let high = video.thumbnail?.thumbnails?.last
+                            let videoItem = VideoInfoItem(id: video.videoId, title: title, channelTitle: channelTitle, medium: medium, high: high)
+                            relatedItems.append(videoItem)
+                        } else if let playlist = itemSectionContent.playlistRenderer {
+                            let title = playlist.title?.simpleText
+                            let channelTitle = playlist.longBylineText?.runs?.first?.text
+                            let thumbnail = playlist.thumbnails?.first?.thumbnails?.last
+                            let videoCount: Int? = Int(playlist.videoCount ?? "0")
+                            let playlistItem = PlaylistInfoItem(id: playlist.playlistId, title: title, channelTitle: channelTitle, coverUrl: thumbnail?.url, videoCount: videoCount)
+                            relatedItems.append(playlistItem)
+                        }
+                    }
+                } else if let continuationItem = content.continuationItemRenderer, let endpoint = continuationItem.continuationEndpoint, let command = endpoint.continuationCommand {
+                    if let token = command.token {
+                        searchInfo.continuation = token
+                    }
+                }
+            }
+        }
+
+        searchInfo.relatedItems = relatedItems
+
+        return searchInfo
+    }
     
     private func bypassAgeGate() async throws {
         let innertube = InnerTube(client: .tvEmbed, useOAuth: useOAuth, allowCache: allowOAuthCache)

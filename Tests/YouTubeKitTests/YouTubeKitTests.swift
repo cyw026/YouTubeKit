@@ -94,6 +94,26 @@ final class YouTubeKitTests: XCTestCase {
             XCTFail("did throw error: \(error)")
         }
     }
+
+    func testSearch() async {
+        let youtube = YouTube(videoID: "HtVdAasjOgU")
+        do {
+            let searchInfo = try await youtube.search(query: "陈奕迅", continuation: nil)
+            if let items = searchInfo.relatedItems {
+                for item in items {
+                    if item is VideoInfoItem {
+                        
+                        print("\(item.id ?? "")", item.jsonString())
+                    } else if item is PlaylistInfoItem {
+                        print("\(item.id ?? "")", (item as! PlaylistInfoItem).jsonString())
+                    }
+                }
+            }
+            
+        } catch let error {
+            XCTFail("did throw error: \(error)")
+        }
+    }
     
     
     // MARK: - Performance Measurement
