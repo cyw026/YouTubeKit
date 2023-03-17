@@ -166,6 +166,8 @@ class InnerTube {
 
     struct SearchResult: Decodable {
         let contents: Contents?
+        let onResponseReceivedCommands: [ResponseReceivedCommand]?
+
         struct Contents: Decodable {
             let twoColumnSearchResultsRenderer: TwoColumnSearchResultsRenderer?
             struct TwoColumnSearchResultsRenderer: Decodable {
@@ -174,6 +176,14 @@ class InnerTube {
                 struct PrimaryContents: Decodable {
                     let sectionListRenderer: SectionListRenderer?
                 }
+            }
+        }
+
+        struct ResponseReceivedCommand: Decodable {
+            let appendContinuationItemsAction: AppendContinuationItemsAction?
+
+            struct AppendContinuationItemsAction: Decodable {
+                let continuationItems: [SectionListRenderer.Content]?
             }
         }
     }
