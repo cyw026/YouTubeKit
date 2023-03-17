@@ -119,9 +119,9 @@ class InnerTube {
         
         let (responseData, _) = try await URLSession.shared.data(for: request)
 
-//        let str = String(decoding: responseData, as: UTF8.self)
-//
-//        print("responseData:", str)
+        let str = String(decoding: responseData, as: UTF8.self)
+
+        print("responseData:", str)
         
         return try JSONDecoder().decode(T.self, from: responseData)
     }
@@ -280,6 +280,22 @@ class InnerTube {
 
         let object = SearchObject(context: context, continuation: continuation)
         return try await callAPI(endpoint: baseURL + "/search", query: query, object: object)
+    }
+
+    func playlistInfo(playlistId: String, continuation: String? = nil) async throws -> SearchResult {
+
+        struct SearchObject: Encodable {
+            let context: Context
+            let continuation: String?
+        }
+
+        let query = baseParams + [
+            URLQueryItem(name: "browseId", value: "VL\(playlistId)"),
+            URLQueryItem(name: "params", value: "wgYCCAA%3D")
+        ]
+
+        let object = SearchObject(context: context, continuation: continuation)
+        return try await callAPI(endpoint: baseURL + "/browse", query: query, object: object)
     }
     
     // TODO: change result type
