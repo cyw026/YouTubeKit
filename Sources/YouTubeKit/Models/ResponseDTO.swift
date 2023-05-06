@@ -9,37 +9,34 @@ import Foundation
 
 struct YTResponse: Decodable {
     let contents: Contents?
-    let onResponseReceivedCommands: [ResponseReceivedCommand]?
-
+    let onResponseReceivedActions: [onResponseReceivedAction]?
+    
     struct Contents: Decodable {
-        let twoColumnSearchResultsRenderer: TwoColumnSearchResultsRenderer?
-        let tabs: [Tab]?
-        struct TwoColumnSearchResultsRenderer: Decodable {
-            let primaryContents: PrimaryContents?
+        let twoColumnBrowseResultsRenderer: TwoColumnBrowseResultsRenderer?
+        
+        struct TwoColumnBrowseResultsRenderer: Decodable {
+            
+            let tabs: [Tab]?
+            
+            struct Tab: Decodable {
+                let tabRenderer: TabRenderer?
 
-            struct PrimaryContents: Decodable {
-                let sectionListRenderer: SectionListRenderer?
-            }
-        }
+                struct TabRenderer: Decodable {
+                    let content: Content?
 
-        struct Tab: Decodable {
-            let tabRenderer: TabRenderer?
-
-            struct TabRenderer: Decodable {
-                let content: Content?
-
-                struct Content: Decodable {
-                    let sectionListRenderer: SectionListRenderer?
+                    struct Content: Decodable {
+                        let sectionListRenderer: SectionListRenderer?
+                    }
                 }
             }
         }
     }
-
-    struct ResponseReceivedCommand: Decodable {
+    
+    struct onResponseReceivedAction: Decodable {
         let appendContinuationItemsAction: AppendContinuationItemsAction?
 
         struct AppendContinuationItemsAction: Decodable {
-            let continuationItems: [SectionListRenderer.Content]?
+            let continuationItems: [PlaylistVideoListRenderer.Content]?
         }
     }
 }
@@ -49,30 +46,36 @@ struct SectionListRenderer: Decodable {
 
     struct Content: Decodable {
         let itemSectionRenderer: ItemSectionRenderer?
-        let continuationItemRenderer: ContinuationItemRenderer?
     }
 }
 
 struct ItemSectionRenderer: Decodable {
     let contents: [Content]?
     struct Content: Decodable {
-        let videoRenderer: VideoRenderer?
-        let playlistRenderer: PlaylistRenderer?
+        let playlistVideoListRenderer: PlaylistVideoListRenderer?
     }
 }
 
-struct LongBylineText: Decodable {
+struct PlaylistVideoListRenderer: Decodable {
+    let contents: [Content]?
+    struct Content: Decodable {
+        let playlistVideoRenderer: PlaylistVideoRenderer?
+        let continuationItemRenderer: ContinuationItemRenderer?
+    }
+}
+
+struct ShortBylineText: Decodable {
     let runs: [Run]?
     struct Run: Decodable {
         let text: String?
     }
 }
 
-struct VideoRenderer: Decodable {
+struct PlaylistVideoRenderer: Decodable {
     let videoId: String?
     let thumbnail: ThumbnailDTO?
     let title: Title?
-    let longBylineText: LongBylineText?
+    let shortBylineText: ShortBylineText?
 
     struct ThumbnailDTO: Decodable {
         let thumbnails: [Thumbnail]?
@@ -83,22 +86,6 @@ struct VideoRenderer: Decodable {
         struct Run: Decodable {
             let text: String?
         }
-    }
-}
-
-struct PlaylistRenderer: Decodable {
-    let playlistId: String?
-    let thumbnails: [ThumbnailDTO]?
-    let title: Title?
-    let videoCount: String?
-    let longBylineText: LongBylineText?
-
-    struct ThumbnailDTO: Decodable {
-        let thumbnails: [Thumbnail]?
-    }
-
-    struct Title: Decodable {
-        let simpleText: String?
     }
 }
 

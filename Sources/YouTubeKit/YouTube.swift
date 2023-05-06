@@ -219,47 +219,36 @@ public class YouTube {
         }
     }
 
-    public func playlistInfo(playlistId: String, continuation: String? = nil) async throws ->SearchInfo {
+    public func playlistInfo(playlistId: String, continuation: String? = nil) async throws ->PlaylistInfo {
 
         let innertube = InnerTube(client: .web, useOAuth: useOAuth, allowCache: allowOAuthCache)
 
         let response = try await innertube.playlistInfo(playlistId: playlistId, continuation: continuation)
 
-        var searchInfo = SearchInfo(searchString: query)
+        var playlistInfo = PlaylistInfo(playlistId: playlistId, title: "", channelTitle: "")
 
-        var relatedItems: [InfoItem] = []
+        var relatedItems: [VideoInfoItem] = []
 
-        if let sectionListContents = response.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer?.contents ?? response.onResponseReceivedCommands?.first?.appendContinuationItemsAction?.continuationItems {
-            for content in sectionListContents {
-                if let itemSection = content.itemSectionRenderer, let contents = itemSection.contents {
-                    for itemSectionContent in contents {
-                        if let video = itemSectionContent.videoRenderer {
-                            let title = video.title?.runs?.first?.text
-                            let channelTitle = video.longBylineText?.runs?.first?.text
-                            let medium = video.thumbnail?.thumbnails?.first
-                            let high = video.thumbnail?.thumbnails?.last
-                            let videoItem = VideoInfoItem(id: video.videoId, title: title, channelTitle: channelTitle, medium: medium, high: high)
-                            relatedItems.append(videoItem)
-                        } else if let playlist = itemSectionContent.playlistRenderer {
-                            let title = playlist.title?.simpleText
-                            let channelTitle = playlist.longBylineText?.runs?.first?.text
-                            let thumbnail = playlist.thumbnails?.first?.thumbnails?.last
-                            let videoCount: Int? = Int(playlist.videoCount ?? "0")
-                            let playlistItem = PlaylistInfoItem(id: playlist.playlistId, title: title, channelTitle: channelTitle, coverUrl: thumbnail?.url, videoCount: videoCount)
-                            relatedItems.append(playlistItem)
-                        }
-                    }
+        if let playlistVideoListContents = response.contents?.twoColumnBrowseResultsRenderer?.tabs?.first?.tabRenderer?.content?.sectionListRenderer?.contents?.first?.itemSectionRenderer?.contents?.first?.playlistVideoListRenderer?.contents ??  response.onResponseReceivedActions?.first?.appendContinuationItemsAction?.continuationItems {
+            for content in playlistVideoListContents {
+                if let playlistVideo = content.playlistVideoRenderer {
+                    let title = playlistVideo.title?.runs?.first?.text
+                    let channelTitle = playlistVideo.shortBylineText?.runs?.first?.text
+                    let medium = playlistVideo.thumbnail?.thumbnails?.first
+                    let high = playlistVideo.thumbnail?.thumbnails?.last
+                    let videoItem = VideoInfoItem(id: playlistVideo.videoId, title: title, channelTitle: channelTitle, medium: medium, high: high)
+                    relatedItems.append(videoItem)
                 } else if let continuationItem = content.continuationItemRenderer, let endpoint = continuationItem.continuationEndpoint, let command = endpoint.continuationCommand {
                     if let token = command.token {
-                        searchInfo.continuation = token
+                        playlistInfo.continuation = token
                     }
                 }
             }
         }
 
-        searchInfo.relatedItems = relatedItems
+        playlistInfo.relatedItems = relatedItems
 
-        return searchInfo
+        return playlistInfo
     }
 
     public func search(query: String, contentFilter: String? = nil, continuation: String? = nil) async throws ->SearchInfo {

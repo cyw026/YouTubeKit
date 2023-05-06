@@ -136,6 +136,22 @@ final class YouTubeKitTests: XCTestCase {
         }
     }
     
+    func testPlaylistInfo() async {
+        let youtube = YouTube(videoID: "HtVdAasjOgU")
+        do {
+            let nextPage: String? = "4qmFsgJhEiRWTFBMUWV3VE5ZX3lTNWduSXNkSEhYenVqRy0tMkpMYWZjTkoaFENBRjZCbEJVT2tOSFVjSUdBZ2dBmgIiUExRZXdUTllfeVM1Z25Jc2RISFh6dWpHLS0ySkxhZmNOSg%3D%3D"
+            let playlistInfo = try await youtube.playlistInfo(playlistId: "PLQewTNY_yS5gnIsdHHXzujG--2JLafcNJ", continuation: nextPage)
+            if let items = playlistInfo.relatedItems {
+                for item in items {
+                    print("\(item.id ?? "")", item.jsonString())
+                }
+            }
+            
+        } catch let error {
+            XCTFail("did throw error: \(error)")
+        }
+    }
+    
     
     // MARK: - Performance Measurement
     

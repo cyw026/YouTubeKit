@@ -311,20 +311,26 @@ class InnerTube {
         return try await callAPI(endpoint: baseURL + "/search", query: query, object: object)
     }
 
-    func playlistInfo(playlistId: String, continuation: String? = nil) async throws -> SearchResult {
+    func playlistInfo(playlistId: String, continuation: String? = nil) async throws -> YTResponse {
 
-        struct SearchObject: Encodable {
+        struct PlaylistRequest: Encodable {
             let context: Context
             let continuation: String?
+            
+            var browseId: String?
+            var params: String?
         }
-
-        let query = baseParams + [
-            URLQueryItem(name: "browseId", value: "VL\(playlistId)"),
-            URLQueryItem(name: "params", value: "wgYCCAA%3D")
+        let query = [
+            URLQueryItem(name: "key", value: apiKey),
         ]
 
-        let object = SearchObject(context: context, continuation: continuation)
-        return try await callAPI(endpoint: baseURL + "/browse", query: query, object: object)
+        var object: PlaylistRequest?
+        if continuation != nil {
+            object = PlaylistRequest(context: context, continuation: continuation)
+        } else {
+            object = PlaylistRequest(context: context, continuation: continuation, browseId: "VL\(playlistId)", params: "wgYCCAA%3D")
+        }
+        return try await callAPI(endpoint: baseURL + "/browse?prettyPrint=false", query: query, object: object)
     }
     
     // TODO: change result type
