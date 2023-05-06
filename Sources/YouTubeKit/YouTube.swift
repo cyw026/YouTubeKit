@@ -237,7 +237,9 @@ public class YouTube {
                     let medium = playlistVideo.thumbnail?.thumbnails?.first
                     let high = playlistVideo.thumbnail?.thumbnails?.last
                     let videoItem = VideoInfoItem(id: playlistVideo.videoId, title: title, channelTitle: channelTitle, medium: medium, high: high)
-                    relatedItems.append(videoItem)
+                    if let title, !title.contains("[Private video]") {
+                        relatedItems.append(videoItem)
+                    }
                 } else if let continuationItem = content.continuationItemRenderer, let endpoint = continuationItem.continuationEndpoint, let command = endpoint.continuationCommand {
                     if let token = command.token {
                         playlistInfo.continuation = token

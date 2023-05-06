@@ -136,7 +136,7 @@ class InnerTube {
 
         let str = String(decoding: responseData, as: UTF8.self)
 
-        print("responseData:", str)
+        //print("responseData:", str)
         
         return try JSONDecoder().decode(T.self, from: responseData)
     }

@@ -139,8 +139,8 @@ final class YouTubeKitTests: XCTestCase {
     func testPlaylistInfo() async {
         let youtube = YouTube(videoID: "HtVdAasjOgU")
         do {
-            let nextPage: String? = "4qmFsgJhEiRWTFBMUWV3VE5ZX3lTNWduSXNkSEhYenVqRy0tMkpMYWZjTkoaFENBRjZCbEJVT2tOSFVjSUdBZ2dBmgIiUExRZXdUTllfeVM1Z25Jc2RISFh6dWpHLS0ySkxhZmNOSg%3D%3D"
-            let playlistInfo = try await youtube.playlistInfo(playlistId: "PLQewTNY_yS5gnIsdHHXzujG--2JLafcNJ", continuation: nextPage)
+            let nextPage: String? = "4qmFsgJBEhRWTFBMOUMyODE4Mjc2QjBCM0ZDMBoUQ0FGNkJsQlVPa05IVWNJR0FnZ0GaAhJQTDlDMjgxODI3NkIwQjNGQzA%3D"
+            let playlistInfo = try await youtube.playlistInfo(playlistId: "PL9C2818276B0B3FC0", continuation: nextPage)
             if let items = playlistInfo.relatedItems {
                 for item in items {
                     print("\(item.id ?? "")", item.jsonString())
