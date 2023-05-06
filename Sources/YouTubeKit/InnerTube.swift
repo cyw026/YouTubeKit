@@ -133,6 +133,10 @@ class InnerTube {
         // TODO: handle oauth auth case again
         
         let (responseData, _) = try await URLSession.shared.data(for: request)
+
+        let str = String(decoding: responseData, as: UTF8.self)
+
+        print("responseData:", str)
         
         return try JSONDecoder().decode(T.self, from: responseData)
     }
@@ -174,6 +178,99 @@ class InnerTube {
             var s: String? // assigned from Extraction.applyDescrambler
         }
     }
+
+    struct SearchResult: Decodable {
+        let contents: Contents?
+        let onResponseReceivedCommands: [ResponseReceivedCommand]?
+
+        struct Contents: Decodable {
+            let twoColumnSearchResultsRenderer: TwoColumnSearchResultsRenderer?
+            struct TwoColumnSearchResultsRenderer: Decodable {
+                let primaryContents: PrimaryContents?
+
+                struct PrimaryContents: Decodable {
+                    let sectionListRenderer: SectionListRenderer?
+                }
+            }
+        }
+
+        struct ResponseReceivedCommand: Decodable {
+            let appendContinuationItemsAction: AppendContinuationItemsAction?
+
+            struct AppendContinuationItemsAction: Decodable {
+                let continuationItems: [SectionListRenderer.Content]?
+            }
+        }
+    }
+
+    struct SectionListRenderer: Decodable {
+        let contents: [Content]?
+
+        struct Content: Decodable {
+            let itemSectionRenderer: ItemSectionRenderer?
+            let continuationItemRenderer: ContinuationItemRenderer?
+        }
+    }
+
+    struct ItemSectionRenderer: Decodable {
+        let contents: [Content]?
+        struct Content: Decodable {
+            let videoRenderer: VideoRenderer?
+            let playlistRenderer: PlaylistRenderer?
+        }
+    }
+
+    struct LongBylineText: Decodable {
+        let runs: [Run]?
+        struct Run: Decodable {
+            let text: String?
+        }
+    }
+
+    struct VideoRenderer: Decodable {
+        let videoId: String?
+        let thumbnail: ThumbnailDTO?
+        let title: Title?
+        let longBylineText: LongBylineText?
+
+        struct ThumbnailDTO: Decodable {
+            let thumbnails: [Thumbnail]?
+        }
+
+        struct Title: Decodable {
+            let runs: [Run]?
+            struct Run: Decodable {
+                let text: String?
+            }
+        }
+    }
+
+    struct PlaylistRenderer: Decodable {
+        let playlistId: String?
+        let thumbnails: [ThumbnailDTO]?
+        let title: Title?
+        let videoCount: String?
+        let longBylineText: LongBylineText?
+
+        struct ThumbnailDTO: Decodable {
+            let thumbnails: [Thumbnail]?
+        }
+
+        struct Title: Decodable {
+            let simpleText: String?
+        }
+    }
+
+    struct ContinuationItemRenderer: Decodable {
+        let continuationEndpoint: ContinuationEndpoint?
+        struct ContinuationEndpoint: Decodable {
+            let continuationCommand: ContinuationCommand?
+            struct ContinuationCommand: Decodable {
+                let token: String?
+                let request: String?
+            }
+        }
+    }
     
     private struct PlayerRequest: Encodable {
         let context: Context
@@ -198,7 +295,7 @@ class InnerTube {
     }
     
     // TODO: change result type
-    func search(query: String, continuation: String? = nil) async throws -> [String: String] {
+    func search(query: String, contentFilter: String? = nil, continuation: String? = nil) async throws -> SearchResult {
         
         struct SearchObject: Encodable {
             let context: Context
@@ -206,10 +303,28 @@ class InnerTube {
         }
         
         let query = baseParams + [
-            URLQueryItem(name: "query", value: query)
+            URLQueryItem(name: "query", value: query),
+            URLQueryItem(name: "params", value: contentFilter)
         ]
+
         let object = SearchObject(context: context, continuation: continuation)
         return try await callAPI(endpoint: baseURL + "/search", query: query, object: object)
+    }
+
+    func playlistInfo(playlistId: String, continuation: String? = nil) async throws -> SearchResult {
+
+        struct SearchObject: Encodable {
+            let context: Context
+            let continuation: String?
+        }
+
+        let query = baseParams + [
+            URLQueryItem(name: "browseId", value: "VL\(playlistId)"),
+            URLQueryItem(name: "params", value: "wgYCCAA%3D")
+        ]
+
+        let object = SearchObject(context: context, continuation: continuation)
+        return try await callAPI(endpoint: baseURL + "/browse", query: query, object: object)
     }
     
     // TODO: change result type
