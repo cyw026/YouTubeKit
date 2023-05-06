@@ -250,6 +250,13 @@ public class YouTube {
 
         return playlistInfo
     }
+    
+    public func playlistInfo(playlistId: String, continuation: String? = nil, completion: @escaping (PlaylistInfo) -> Void) throws {
+        Task {
+            let playlistInfo = try await playlistInfo(playlistId: playlistId, continuation: continuation)
+            completion(playlistInfo)
+        }
+    }
 
     public func search(query: String, contentFilter: String? = nil, continuation: String? = nil) async throws ->SearchInfo {
         let innertube = InnerTube(client: .web, useOAuth: useOAuth, allowCache: allowOAuthCache)
