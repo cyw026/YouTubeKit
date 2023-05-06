@@ -15,9 +15,16 @@ class InnerTube {
         let version: String
         let screen: String?
         let apiKey: String
+        let userAgent: String?
+
+        var androidSdkVersion: Int? = nil
         
         var context: Context {
-            return Context(client: InnerTube.Context.ContextClient(clientName: name, clientVersion: version, clientScreen: screen))
+            return Context(client: InnerTube.Context.ContextClient(clientName: name, clientVersion: version, clientScreen: screen, androidSdkVersion: androidSdkVersion))
+        }
+        
+        var headers: [String: String] {
+            ["User-Agent": userAgent ?? ""].filter { !$0.value.isEmpty }
         }
     }
     
@@ -28,20 +35,22 @@ class InnerTube {
             let clientName: String
             let clientVersion: String
             let clientScreen: String?
+            let androidSdkVersion: Int?
         }
     }
     
     // overview of clients: https://github.com/zerodytrash/YouTube-Internal-Clients
     private let defaultClients = [
-        ClientType.web: Client(name: "WEB", version: "2.20200720.00.02", screen: nil, apiKey: "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"),
-        ClientType.android: Client(name: "ANDROID", version: "16.20", screen: nil, apiKey: "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"),
-        ClientType.webEmbed: Client(name: "WEB", version: "2.20210721.00.00", screen: "EMBED", apiKey: "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"),
-        ClientType.androidEmbed: Client(name: "ANDROID", version: "16.20", screen: "EMBED", apiKey: "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"),
-        ClientType.tvEmbed: Client(name: "TVHTML5_SIMPLY_EMBEDDED_PLAYER", version: "2.0", screen: "EMBED", apiKey: "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8")
+        ClientType.web: Client(name: "WEB", version: "2.20200720.00.02", screen: nil, apiKey: "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8", userAgent: "Mozilla/5.0"),
+        ClientType.android: Client(name: "ANDROID", version: "17.31.35", screen: nil, apiKey: "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8", userAgent: "com.google.android.youtube/17.31.35 (Linux; U; Android 11) gzip", androidSdkVersion: 30),
+        ClientType.androidMusic: Client(name: "ANDROID_MUSIC", version: "5.16.51", screen: nil, apiKey: "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8", userAgent: "com.google.android.apps.youtube.music/17.31.35 (Linux; U; Android 11) gzip", androidSdkVersion: 30),
+        ClientType.webEmbed: Client(name: "WEB_EMBEDDED_PLAYER", version: "1.20220731.00.00", screen: "EMBED", apiKey: "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8", userAgent: "Mozilla/5.0"),
+        ClientType.androidEmbed: Client(name: "ANDROID_EMBEDDED_PLAYER", version: "17.31.35", screen: "EMBED", apiKey: "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8", userAgent: "com.google.android.youtube/17.31.35 (Linux; U; Android 11) gzip"),
+        ClientType.tvEmbed: Client(name: "TVHTML5_SIMPLY_EMBEDDED_PLAYER", version: "2.0", screen: "EMBED", apiKey: "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8", userAgent: "Mozilla/5.0")
     ]
     
     enum ClientType {
-        case web, android, webEmbed, androidEmbed, tvEmbed
+        case web, android, androidMusic, webEmbed, androidEmbed, tvEmbed
     }
     
     private var accessToken: String?
@@ -52,12 +61,14 @@ class InnerTube {
     
     private let apiKey: String
     private let context: Context
+    private let headers: [String: String]
     
     private let baseURL = "https://www.youtube.com/youtubei/v1"
     
     init(client: ClientType = .android, useOAuth: Bool = false, allowCache: Bool = true) {
         self.context = defaultClients[client]!.context
         self.apiKey = defaultClients[client]!.apiKey
+        self.headers = defaultClients[client]!.headers
         self.useOAuth = useOAuth
         self.allowCache = allowCache
         
@@ -115,6 +126,10 @@ class InnerTube {
         request.addValue("Mozilla/5.0", forHTTPHeaderField: "User-Agent")
         request.addValue("en-US,en", forHTTPHeaderField: "accept-language")
         
+        for (key, value) in headers {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        
         // TODO: handle oauth auth case again
         
         let (responseData, _) = try await URLSession.shared.data(for: request)
@@ -160,12 +175,26 @@ class InnerTube {
         }
     }
     
+    private struct PlayerRequest: Encodable {
+        let context: Context
+        let videoId: String
+        let params: String = "8AEB"
+        //let paybackContext
+        let contentCheckOk: Bool = true
+        let racyCheckOk: Bool = true
+    }
+    
+    private func playerRequest(forVideoID videoID: String) -> PlayerRequest {
+        PlayerRequest(context: context, videoId: videoID)
+    }
+    
     func player(videoID: String) async throws -> VideoInfo {
         let endpoint = baseURL + "/player"
-        let query = baseParams + [
-            URLQueryItem(name: "videoId", value: videoID)
+        let query = [
+            URLQueryItem(name: "key", value: apiKey)
         ]
-        return try await callAPI(endpoint: endpoint, query: query, object: baseData)
+        let request = playerRequest(forVideoID: videoID)
+        return try await callAPI(endpoint: endpoint, query: query, object: request)
     }
     
     // TODO: change result type
