@@ -275,7 +275,7 @@ class InnerTube {
     private struct PlayerRequest: Encodable {
         let context: Context
         let videoId: String
-        let params: String = "8AEB"
+        let params: String = "CgIQBg"
         //let paybackContext
         let contentCheckOk: Bool = true
         let racyCheckOk: Bool = true
@@ -288,7 +288,8 @@ class InnerTube {
     func player(videoID: String) async throws -> VideoInfo {
         let endpoint = baseURL + "/player"
         let query = [
-            URLQueryItem(name: "key", value: apiKey)
+            URLQueryItem(name: "key", value: apiKey),
+            URLQueryItem(name: "prettyPrint", value: "false")
         ]
         let request = playerRequest(forVideoID: videoID)
         return try await callAPI(endpoint: endpoint, query: query, object: request)
